@@ -100,8 +100,7 @@ TelegramBot.prototype._processUpdate = function (update) {
           if (reg.argsre) {
             var args = [];
             var match;
-            while(match = reg.argsre.exec(result[1])) {
-              console.log(match[1])
+            while(result[1] && (match = reg.argsre.exec(result[1]))) {
               args.push(match[1]);
             }
             debug('Invoking command with arguments %j', args);
