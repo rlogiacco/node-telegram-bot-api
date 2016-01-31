@@ -97,7 +97,18 @@ TelegramBot.prototype._processUpdate = function (update) {
         var result = reg.regexp.exec(message.text);
         if (result) {
           debug('Matches', reg.regexp);
-          reg.callback(message, result);
+          if (reg.argsre) {
+            var args = [];
+            var match;
+            while(match = reg.argsre.exec(result[1])) {
+              console.log(match[1])
+              args.push(match[1]);
+            }
+            debug('Invoking command with arguments %j', args);
+            reg.callback(message, args);
+          } else {
+            reg.callback(message, result);
+          }
         }
       });
     }
@@ -559,6 +570,16 @@ TelegramBot.prototype.onText = function (regexp, callback) {
 };
 
 /**
+ * Register a command handler.
+ * @param  {String}   commnad      Command name, it will be prefixed with `/`.
+ * @param  {Function} callback     Callback will be called with 2 parameters,
+ * the `msg` and the arguments (comma separated list).
+ */
+TelegramBot.prototype.onCommand = function (command, callback) {
+  this.textRegexpCallbacks.push({regexp: new RegExp('/' + command + '(?: (.*))?'), callback: callback, argsre: /(?:([^\,]+)(?:\,\s?)?)/g});
+};
+
+/**
  * Waits for a response message on the same chat and the same sender of the
  * provided message and the optional timeout.
  * @param  {Object} [message] The Telegram message to extract chat.id and from.id to wait for.
@@ -572,7 +593,6 @@ TelegramBot.prototype.waitResponse = function(message) {
   return function() {
     return new Promise(function (resolve, reject) {
       waiting[id] = {resolve: resolve, reject: reject};
-      console.log('created wait')
     })
     .cancellable()
     .timeout(timeout)
